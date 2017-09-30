@@ -60,6 +60,7 @@ def GetAPI (url) :
         print("error at GetAPI")
         print(e)
 
+# TODO: Move posting methods to Output.py
 def PostSlack (message) :
     for token in s_tokens :
         s_url = "https://slack.com/api/chat.postMessage?"

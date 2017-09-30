@@ -39,9 +39,3 @@ class System :
         return (int((self.vpNow - self.vpMax) // 20))
     def DustMod (self) :
         return self.vpMax / 3000
-
-def PlexDelta (New, Old) :
-    if New.ownerID == Old.ownerID :
-        return (New.Plexes() - Old.Plexes())
-    else :
-        return 0

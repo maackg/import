@@ -1,12 +1,39 @@
-import persist
-from system import PlexDelta
-from warzone import TotalPlexDelta
 
 _green = 40
 _yellow = 60
 _red = 80
 
 limit = 6
+
+def PlexDelta (New, Old) :
+    if New.ownerID == Old.ownerID :
+        return (New.Plexes() - Old.Plexes())
+    else :
+        return 0
+
+# TODO: scrap this method
+def TotalPlexDelta (wzNew, wzOld, idFriendly, idHostile) :
+    Friendly = [0, 0, 0]
+    Hostile = [0, 0, 0]
+    Total = [0, 0, 0]
+    for name, sys in wzNew.systems.items() :
+        if sys.ownerID == idFriendly :
+            delta = PlexDelta(sys, wzOld.systems[name])
+            if delta > 0 :
+                Hostile[1] += delta
+            else :
+                Friendly[0] -= delta
+        elif sys.ownerID == idHostile :
+            delta = PlexDelta(sys, wzOld.systems[name])
+            if delta > 0 :
+                Friendly[1] += delta
+            else :
+                Hostile[0] -= delta
+    Friendly[2] = Friendly[0] + Friendly[1]
+    Hostile[2] = Hostile[0] + Hostile[1]
+    for i in range(3) :
+        Total[i] = Friendly[i] + Hostile[i]
+    return [Friendly, Hostile, Total]
 
 # TODO: redesign this entire method, including better naming
 def FWintel (wzNew, wzOld, _us) :
@@ -19,17 +46,15 @@ def FWintel (wzNew, wzOld, _us) :
 
     # specify enemy factionID based on curent factionID
     _them = {
-    500003: 500002,
-    500002: 500003,
-    500001: 500004,
-    500004: 500001
-    }[_us]
-    FacNames = {
+        500003: 500002,
+        500002: 500003,
+        500001: 500004,
+        500004: 500001}[_us]
+    FacNames = { # shorthand names 
         500001: "Caldari",
         500002: "Minmatar",
         500003: "Amarr",
-        500004: "Gallente"
-    }
+        500004: "Gallente"}
 
     m_green = "*`{}` ({}) is {:.1f}% contested. ({:+})*"
     m_yellow = "`{}` ({}) is **{:.1f}%** contested. *({:+})*"

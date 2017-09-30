@@ -83,26 +83,3 @@ class Warzone :
                 vpContest += sys.vpNow
         vpTotal = self.TotalVP([ownerID, hostileID])[1]
         return ((vpDecontest + vpContest) / vpTotal) * 100
-
-def TotalPlexDelta (wzNew, wzOld, idFriendly, idHostile) :
-    Friendly = [0, 0, 0]
-    Hostile = [0, 0, 0]
-    Total = [0, 0, 0]
-    for name, sys in wzNew.systems.items() :
-        if sys.ownerID == idFriendly :
-            delta = system.PlexDelta(sys, wzOld.systems[name])
-            if delta > 0 :
-                Hostile[1] += delta
-            else :
-                Friendly[0] -= delta
-        elif sys.ownerID == idHostile :
-            delta = system.PlexDelta(sys, wzOld.systems[name])
-            if delta > 0 :
-                Friendly[1] += delta
-            else :
-                Hostile[0] -= delta
-    Friendly[2] = Friendly[0] + Friendly[1]
-    Hostile[2] = Hostile[0] + Hostile[1]
-    for i in range(3) :
-        Total[i] = Friendly[i] + Hostile[i]
-    return [Friendly, Hostile, Total]
