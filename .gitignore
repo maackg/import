@@ -1,8 +1,12 @@
 # ignore old data, and temp data
 dump/
-history/*.*
-temp/*.*
+history/*
+temp/*
 xml/
+
+# retain the folders themselves
+!temp/.placeholder
+!history/.placeholder
 
 # ignore pycache and compiled files
 __pycache__/

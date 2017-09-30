@@ -32,7 +32,7 @@ def FWintel (wzNew, wzOld, _us) :
     }
 
     m_green = "*`{}` ({}) is {:.1f}% contested. ({:+})*"
-    m_yellow = "*`{}` ({}) is **{:.1f}%** contested. *({:+})*"
+    m_yellow = "`{}` ({}) is **{:.1f}%** contested. *({:+})*"
     m_red = "**Hey!** `{}` ({}) is **{:.1f}%** contested! *({:+}; {} until vuln*)"
     m_vuln = "`{}` is vulnerable! (**{:+}**, **{}** buffer)"
 
