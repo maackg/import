@@ -1,12 +1,20 @@
 
 import xml.etree.ElementTree as XML
+import json
 
-facIDs = {
+xml_facIDs = {
         "Caldari State" : 500001,
         "Minmatar Republic" : 500002,
         "Amarr Empire" : 500003,
         "Gallente Federation" : 500004,
     }
+
+FacNames = {
+    500001 : "Caldari State",
+    500002 : "Minmatar Republic",
+    500003 : "Amarr Empire",
+    500004 : "Gallente Federation"
+}
 
 class System :
     def __init__ (self, Data, Type) :
@@ -14,12 +22,25 @@ class System :
             self.FromXML(Data)
         elif Type == 2 :
             self.FromDict(Data)
+        elif Type == 3 :
+            self.FromESI(Data)
+
+    def FromESI (self, data) :
+        with open("names.json", 'r') as f :
+            names = json.load(f)
+        self.ID = data['solar_system_id']
+        self.name = names[str(self.ID)]
+        self.ownerID = data['owner_faction_id']
+        self.owner = FacNames[self.ownerID]
+        self.vpNow = data['victory_points']
+        self.vpMax = data['victory_points_threshold']
+        self.contested = data['contested']
 
     def FromXML (self, row) :
         self.ID = int(row.get('solarSystemID'))
         self.name = row.get('solarSystemName')
         self.owner = row.get('occupyingFactionName') or row.get('owningFactionName')
-        self.ownerID = int(facIDs[self.owner])
+        self.ownerID = int(xml_facIDs[self.owner])
 
         self.vpNow = int(row.get('victoryPoints'))
         self.vpMax = int(row.get('victoryPointThreshold'))

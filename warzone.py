@@ -1,6 +1,7 @@
 
 from datetime import datetime as dt
 import xml.etree.ElementTree as XML
+import json
 
 import persist
 import system
@@ -23,6 +24,18 @@ class Warzone :
             self.FromXML(Obj)
         elif Type == 2 :   # JSON
             self.FromJS(Obj)
+        elif Type == 3 :
+            self.FromESI(Obj)
+
+    def FromESI (self, Data) :
+        self.data = Data
+        self.timestamp = Data['timestamp']
+        self.systems = {}
+        with open("names.json", 'r') as f :
+            names = json.load(f)
+        for sysdata in self.data['body'] :
+            name = names[str(sysdata['solar_system_id'])]
+            self.systems[name] = system.System(sysdata, 3)
 
     def FromXML (self, tree) :     # from XML tree
         self.timestamp = tree[0].text

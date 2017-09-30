@@ -4,7 +4,7 @@ import json
 
 import persist
 
-_historyfile = "slack_history.json"
+_historyfile = "temp/slack_history.json"
 
 
 # Towards when I retired, support for multiple slacks was hacked together

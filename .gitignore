@@ -1,7 +1,7 @@
 # ignore old data, and temp data
 dump/
-history/*
-temp/*
+history/*.*
+temp/*.*
 xml/
 
 # ignore pycache and compiled files
