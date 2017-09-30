@@ -69,7 +69,7 @@ def run (force=False) :
             if (not force) and (cache_expiry > TimeNow) :
                 return
             new_data = GetAPI(_url)
-            if (dt.strptime(new_data['expires'], esi_dt) > TimeNow) and (not force) :
+            if (dt.strptime(new_data['expires'], esi_dt) < TimeNow) and (not force) :
                 return # redundant, but makes sure CCP actually did update
         else :
             new_data = GetAPI(_url)
@@ -96,7 +96,8 @@ def run (force=False) :
                     url="https://discordapp.com/api/webhooks/{0[0]}/{0[1]}".format(Webhook),
                     data=json.dumps({
                     "content":slack_message + sig,
-                    "avatar_url": "https://i.imgur.com/Ijbzs6N.png"}),
+                    "avatar_url": "https://i.imgur.com/zT82ioc.png",
+                    "username":"T-ara"}),
                     headers={'Content-Type': 'application/json'}
                     )
                 status = rs.status_code
