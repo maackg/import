@@ -88,7 +88,7 @@ def FWintel (wzNew, wzOld, _us) :
 
 
     # TODO: design pi-oled schema
-    HomeSys = "Huola"
+    HomeSys = "Pynekastoh"
     HomeStats = [
         HomeSys,
         wzNew.systems[HomeSys].owner[0],

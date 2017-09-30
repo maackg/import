@@ -94,7 +94,9 @@ def run (force=False) :
             for Webhook in d_Webhooks :
                 rs = requests.post(
                     url="https://discordapp.com/api/webhooks/{0[0]}/{0[1]}".format(Webhook),
-                    data=json.dumps({"content":slack_message + sig}),
+                    data=json.dumps({
+                    "content":slack_message + sig,
+                    "avatar_url": "https://i.imgur.com/Ijbzs6N.png"}),
                     headers={'Content-Type': 'application/json'}
                     )
                 status = rs.status_code
