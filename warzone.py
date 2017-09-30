@@ -3,7 +3,6 @@ from datetime import datetime as dt
 import xml.etree.ElementTree as XML
 import json
 
-import persist
 import system
 
 # Summary: Class object for the current state of all FW
@@ -19,15 +18,7 @@ _facIDs = {
 _factions = [500001, 500002, 500003, 500004]
 
 class Warzone :
-    def __init__ (self, Obj, Type) :
-        if Type == 1 :     # XML
-            self.FromXML(Obj)
-        elif Type == 2 :   # JSON
-            self.FromJS(Obj)
-        elif Type == 3 :
-            self.FromESI(Obj)
-
-    def FromESI (self, Data) :
+    def __init__ (self, Data) :
         self.data = Data
         self.timestamp = Data['timestamp']
         self.systems = {}
@@ -35,32 +26,12 @@ class Warzone :
             names = json.load(f)
         for sysdata in self.data['body'] :
             name = names[str(sysdata['solar_system_id'])]
-            self.systems[name] = system.System(sysdata, 3)
+            self.systems[name] = system.System(sysdata)
 
-    def FromXML (self, tree) :     # from XML tree
-        self.timestamp = tree[0].text
-        self.systems = {}
-        for row in tree[1][0] :
-            name = row.get('solarSystemName')
-            self.systems[name] = system.System(row, 1)
-
-    def FromJS (self, Dict) :     # from js file (saved as a dictionary)
-        self.timestamp = Dict['timestamp']
-        self.systems = {}
-        for name, data in Dict['systems'].items() :
-            self.systems[name] = system.System(data, 2)
-
-    def Save (self, folder) :
-        Systems = {}
-        for name, sys in self.systems.items() :
-            Systems[name] = sys.ToDict()
-        Dict = {
-            'timestamp' : self.timestamp,
-            'systems' : Systems
-            }
+    def Save (self, folder="history/") :
         savename = folder + self.timestamp + '.json'
-        persist.JS_save(Dict, savename)
-
+        with open(savename, 'w') as f :
+            json.dump(self.data)
 
     def CountSystems (self, facs = _factions) :     # returns [{facID : num_systems}, total]
         countFacs = {}

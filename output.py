@@ -1,6 +1,6 @@
 import persist
-import system
-import warzone
+from system import PlexDelta
+from warzone import TotalPlexDelta
 
 _green = 40
 _yellow = 60
@@ -42,7 +42,7 @@ def FWintel (wzNew, wzOld, _us) :
         if (OwnerID not in [_us, _them]) or ((Contest < _green)) :
             continue
         Owner = FacNames[sys.ownerID]
-        Delta = system.PlexDelta(sys, wzOld.systems[name])
+        Delta = PlexDelta(sys, wzOld.systems[name])
         Buffer = sys.Buffer()
         Vuln = 0 - Buffer
 
@@ -70,7 +70,7 @@ def FWintel (wzNew, wzOld, _us) :
     for i in alerts[:limit] :
         message += i[1] + '\n'
 
-    TPD = warzone.TotalPlexDelta(wzNew, wzOld, _us, _them)
+    TPD = TotalPlexDelta(wzNew, wzOld, _us, _them)
     plexesUs = [TPD[0][0], TPD[0][1], TPD[0][2]]
     plexesThem = [TPD[1][0], TPD[1][1], TPD[1][2]]
 
