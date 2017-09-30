@@ -1,0 +1,9 @@
+# ignore old data, and temp data
+dump/
+history/*
+temp/*
+xml/
+
+# ignore pycache and compiled files
+__pycache__/
+*.pyc

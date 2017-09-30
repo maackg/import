@@ -1,0 +1,8 @@
+# Configure systems according to this example:
+# SystemName:Contestation
+#Kamela:20
+#Kourmonen:15
+Huola:05
+#Arzad:05
+#Ezzara:20
+#Sahtogas:10
