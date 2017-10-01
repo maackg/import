@@ -11,3 +11,6 @@ xml/
 # ignore pycache and compiled files
 __pycache__/
 *.pyc
+
+# don't overwrite settings file
+settings.json

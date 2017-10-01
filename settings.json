@@ -1,0 +1,22 @@
+{
+  "Militia" : "Caldari State",
+  "_OLED"   : false,
+  "_SLACK"  : false,
+  "_DISCORD": true,
+
+  "Slack"   : [
+    {
+      "token"   : "xoxb-slack-key-here",
+      "channel" : "#fw-intel",
+      "username": "Fwintel 3.0",
+      "icon"    : "http://i.imgur.com/xYBA19C.png"
+    }
+  ],
+  "Discord" : [
+    {
+      "avatar_url"  : "https://i.imgur.com/zT82ioc.png",
+      "url"         : "https://canary.discordapp.com/api/webhooks/363554064480600066/Lm9WXmGSz36-IDiVr51uOk8i73RnBwMVjGqgsURdQbjsh2QkjSEyRRgJPfDKssaTukzJ",
+      "username"    : "dev"
+    }
+  ]
+}

@@ -3,16 +3,24 @@ import json
 import requests
 
 
-FacRev = { # find enemy facID based on current facID
+FacIDs = { # name -> id
+    "Caldari State" : 500001,
+    "Minmatar Republic" : 500002,
+    "Amarr Empire" : 500003,
+    "Gallente Federation" : 500004
+    }
+FacRev = { # our ID -> enemy ID
     500003: 500002,
     500002: 500003,
     500001: 500004,
-    500004: 500001}
+    500004: 500001
+    }
 FacNames = { # shorthand names
     500001: "Caldari",
     500002: "Minmatar",
     500003: "Amarr",
-    500004: "Gallente"}
+    500004: "Gallente"
+    }
 
 def PlexDelta (New, Old) :
     if New.ownerID == Old.ownerID :
@@ -45,10 +53,11 @@ def TotalPlexDelta (wzNew, wzOld, idFriendly, idHostile) :
     return [Friendly, Hostile, Total]
 
 # TODO: redesign this entire method, including better naming
-def FWintel (wzNew, wzOld, _us, wl=[], limit=4) :
+def FWintel (wzNew, wzOld, militia, wl=[], limit=4) :
     message = ""
     alerts  = []
     watchlist = {}
+    _us = FacIDs[militia]
     _them   = FacRev[_us]
     m_basic = "{}-{:12} {:.1f}% ({:+})"
     m_vuln  = "{} is vulnerable! ({:+}, {} buffer)"
@@ -121,32 +130,33 @@ def FWintel (wzNew, wzOld, _us, wl=[], limit=4) :
     return message, oled_message
 
 
-def PostSlack (s_tokens, message) :
-    for token in s_tokens :
+def PostSlack (Tokens, message) :
+    for token in Tokens :
         s_url = "https://slack.com/api/chat.postMessage?"
         args = {
-            "token"     : token[0],
-            "channel"   : token[1],
-            "text"      : message,
-            "username"  : "Fwintel 3.0",
-            "icon_url"  : 'http://i.imgur.com/xYBA19C.png',
+            "channel"   : token['channel'],
+            "icon_url"  : token['icon'],
+            "token"     : token['token'],
+            "username"  : token['username'],
             "link_names": "1",
-            "parse"     : "full"
+            "parse"     : "full",
+            "text"      : message,
         }
         rs = requests.post(
             url=(s_url + '&'.join(map(lambda key:key+'='+args[key]), args))
         )
         status = rs.status_code
 
-def PostDiscord (d_Webhooks, message) :
-    for Webhook in d_Webhooks :
+def PostDiscord (Webhooks, message) :
+    for Webhook in Webhooks :
         rs = requests.post(
-            url="https://discordapp.com/api/webhooks/{0[0]}/{0[1]}".format(Webhook),
-            data=json.dumps({
-            "content": message,
-            "avatar_url": "https://i.imgur.com/zT82ioc.png",
-            "username":"dev"}),
-            headers={'Content-Type': 'application/json'}
+            url     = Webhook['url'],
+            data    = json.dumps({
+                    "content"   : message,
+                    "avatar_url": Webhook['avatar_url'],
+                    "username"  : Webhook['username']
+                    }),
+            headers = {'Content-Type': 'application/json'}
             )
         status = rs.status_code
         if status != 204 : # TODO
