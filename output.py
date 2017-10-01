@@ -50,7 +50,7 @@ def FWintel (wzNew, wzOld, _us) :
         500002: 500003,
         500001: 500004,
         500004: 500001}[_us]
-    FacNames = { # shorthand names 
+    FacNames = { # shorthand names
         500001: "Caldari",
         500002: "Minmatar",
         500003: "Amarr",
@@ -111,7 +111,7 @@ def FWintel (wzNew, wzOld, _us) :
             [syscount[_us], syscount[_them]],
             [FacNames[_us], FacNames[_them]])
 
-
+    # Pi-OLED output message
     # TODO: design pi-oled schema
     HomeSys = "Pynekastoh"
     HomeStats = [

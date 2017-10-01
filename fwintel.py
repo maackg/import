@@ -111,7 +111,7 @@ def run (debugging=False) :
         wzNew = Warzone(new_data)
         wzOld = Warzone(old_data)
 
-        sig = "\n*Current time is {}.*\n*Next update in ~{} minutes.*".format(
+        sig = "\n*{}*\n*Next update in ~{} minutes*".format(
         dt.strftime(dt.utcnow(), esi_dt),
         (dt.strptime(new_data['expires'], esi_dt)-TimeNow).seconds//60)
 
