@@ -14,6 +14,7 @@ _lastdata = "temp/old.json"
 _oled_file = "temp/oled.txt"
 
 esi_dt = "%a, %d %b %Y %H:%M:%S GMT"
+esi_dt_noGMT = "%a, %d %b %Y %H:%M:%S"
 old_dt = "%Y-%m-%d %H:%M:%S"
 
 def GetAPI (url) :
@@ -56,7 +57,7 @@ def run (debugging=False) :
         wzOld = Warzone(old_data)
 
         sig = "\n*{}*\n*Next update in ~{} minutes*\n\~\~\~\~\~".format(
-        dt.strftime(dt.utcnow(), esi_dt),
+        dt.strftime(dt.utcnow(), esi_dt_noGMT),
         (dt.strptime(new_data['expires'], esi_dt)-TimeNow).seconds//60)
 
         slack_message, oled_message  = output.FWintel(wzNew, wzOld, militia, ["Pynekastoh", "Tama", "Old Man Star"])

@@ -81,7 +81,7 @@ def FWintel (wzNew, wzOld, militia, wl=[], limit=4) :
     message += ("Highly contested systems:```\n" +
                 '\n'.join(list(map(lambda x:x[1], high_contest[:limit]))) +
                 "```\n")
-    high_delta = sorted(high_contest, key=lambda a: a[2], reverse=True)
+    high_delta = sorted(high_contest[limit:], key=lambda a: a[2], reverse=True)
     message += ("High-activity systems:```\n" +
                 '\n'.join(list(map(lambda x:x[1], high_delta[:limit]))) +
                 "```")
