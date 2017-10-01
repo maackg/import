@@ -60,38 +60,6 @@ def GetAPI (url) :
         print("error at GetAPI")
         print(e)
 
-# TODO: Move posting methods to Output.py
-def PostSlack (message) :
-    for token in s_tokens :
-        s_url = "https://slack.com/api/chat.postMessage?"
-        args = {
-            "token"     : token[0],
-            "channel"   : token[1],
-            "text"      : message,
-            "username"  : "Fwintel 3.0",
-            "icon_url"  : 'http://i.imgur.com/xYBA19C.png',
-            "link_names": "1",
-            "parse"     : "full"
-        }
-        rs = requests.post(
-            url=(s_url + '&'.join(map(lambda key:key+'='+args[key]), args))
-        )
-        status = rs.status_code
-
-def PostDiscord (message) :
-    for Webhook in d_Webhooks :
-        rs = requests.post(
-            url="https://discordapp.com/api/webhooks/{0[0]}/{0[1]}".format(Webhook),
-            data=json.dumps({
-            "content": message,
-            "avatar_url": "https://i.imgur.com/zT82ioc.png",
-            "username":"dev"}),
-            headers={'Content-Type': 'application/json'}
-            )
-        status = rs.status_code
-        if status != 204 : # TODO
-            print(status)
-
 def run (debugging=False) :
     try :
         TimeNow = dt.utcnow()
@@ -111,16 +79,16 @@ def run (debugging=False) :
         wzNew = Warzone(new_data)
         wzOld = Warzone(old_data)
 
-        sig = "\n*{}*\n*Next update in ~{} minutes*".format(
+        sig = "\n*{}*\n*Next update in ~{} minutes*\n\~\~\~\~\~".format(
         dt.strftime(dt.utcnow(), esi_dt),
         (dt.strptime(new_data['expires'], esi_dt)-TimeNow).seconds//60)
 
-        slack_message, oled_message  = output.FWintel(wzNew, wzOld, _facIDs[_militia])
+        slack_message, oled_message  = output.FWintel(wzNew, wzOld, _facIDs[_militia], ["Pynekastoh", "Tama", "Old Man Star"])
 
         if _SLACK :
-            PostSlack(slack_message + sig)
+            output.PostSlack(s_tokens, slack_message + sig)
         if _DISCORD :
-            PostDiscord(slack_message + sig)
+            output.PostDiscord(d_Webhooks, slack_message + sig)
         if _OLED :
             with open(oled_file, 'w') as f :
                 f.write(oled_message + new_data['expires']+'\n')

@@ -6,8 +6,7 @@ import json
 import system
 
 # Summary: Class object for the current state of all FW
-
-# Todo: Overhaul
+# Mostly, it's a container for all the systems
 
 _facIDs = {
         "Caldari State" : 500001,
@@ -31,7 +30,7 @@ class Warzone :
     def Save (self, folder="history/") :
         savename = folder + self.timestamp + '.json'
         with open(savename, 'w') as f :
-            json.dump(self.data)
+            json.dump(self.data, f, indent='\t')
 
     def CountSystems (self, facs = _factions) :     # returns [{facID : num_systems}, total]
         countFacs = {}
@@ -43,43 +42,3 @@ class Warzone :
                 countFacs[sys.ownerID] += 1
                 countAll += 1
         return [countFacs, countAll]
-
-    def TotalVP (self, facs = _factions) :     # returns [{facID : vpMax}, total]
-        VPfacs = {}
-        VPtotal = 0
-        for ID in facs :
-            VPfacs[ID] = 0
-        for name, sys in self.systems.items() :
-            if sys.ownerID in facs :
-                VPfacs[sys.ownerID] += sys.vpMax
-                VPtotal += sys.vpMax
-        return [VPfacs, VPtotal]
-
-    def DefCon (self, facID) :     # returns % defensive control
-        vpMax, vpNow = 0, 0
-        for name, sys in self.systems.items() :
-            if sys.ownerID == facID :
-                vpMax += sys.vpMax
-                vpNow += sys.vpNow
-        return (1 - (vpNow / vpMax )) * 100
-
-    def OffCon (self, ownerID, hostileID) :     # returns % offensive control
-        vpMaxOwned, vpNowHostile = 0, 0
-        for name, sys in self.systems.items() :
-            if sys.ownerID == ownerID :
-                vpMaxOwned += sys.vpMax
-            elif sys.ownerID == hostileID :
-                vpNowHostile += sys.vpNow
-        vpTotal = self.TotalVP([ownerID, hostileID])[1]
-        return ((vpMaxOwned + vpNowHostile) / vpTotal) * 100
-
-    def TotCon (self, ownerID, hostileID) :     # returns % wz control
-        vpDecontest = 0
-        vpContest = 0
-        for name, sys in self.systems.items() :
-            if sys.ownerID == ownerID :
-                vpDecontest += (sys.vpMax - sys.vpNow)
-            elif sys.ownerID == hostileID :
-                vpContest += sys.vpNow
-        vpTotal = self.TotalVP([ownerID, hostileID])[1]
-        return ((vpDecontest + vpContest) / vpTotal) * 100

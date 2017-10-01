@@ -1,19 +1,28 @@
 
-_green = 40
-_yellow = 60
-_red = 80
+import json
+import requests
 
-limit = 6
+
+FacRev = { # find enemy facID based on current facID
+    500003: 500002,
+    500002: 500003,
+    500001: 500004,
+    500004: 500001}
+FacNames = { # shorthand names
+    500001: "Caldari",
+    500002: "Minmatar",
+    500003: "Amarr",
+    500004: "Gallente"}
 
 def PlexDelta (New, Old) :
     if New.ownerID == Old.ownerID :
         return (New.Plexes() - Old.Plexes())
-    else :
+    else : # prevents 150+ plexes being reported every time a system flips
         return 0
 
-# TODO: scrap this method
+# TODO: redesign this method
 def TotalPlexDelta (wzNew, wzOld, idFriendly, idHostile) :
-    Friendly = [0, 0, 0]
+    Friendly = [0, 0, 0] # schema: [oplex, dplex, sum]
     Hostile = [0, 0, 0]
     Total = [0, 0, 0]
     for name, sys in wzNew.systems.items() :
@@ -36,71 +45,51 @@ def TotalPlexDelta (wzNew, wzOld, idFriendly, idHostile) :
     return [Friendly, Hostile, Total]
 
 # TODO: redesign this entire method, including better naming
-def FWintel (wzNew, wzOld, _us) :
-    warning = 0
-    bash = 0
+def FWintel (wzNew, wzOld, _us, wl=[], limit=4) :
     message = ""
-    alerts = []
-    warnings = []
-    vuln = []
-
-    # specify enemy factionID based on curent factionID
-    _them = {
-        500003: 500002,
-        500002: 500003,
-        500001: 500004,
-        500004: 500001}[_us]
-    FacNames = { # shorthand names
-        500001: "Caldari",
-        500002: "Minmatar",
-        500003: "Amarr",
-        500004: "Gallente"}
-
-    m_green = "*`{}` ({}) is {:.1f}% contested. ({:+})*"
-    m_yellow = "`{}` ({}) is **{:.1f}%** contested. *({:+})*"
-    m_red = "**Hey!** `{}` ({}) is **{:.1f}%** contested! *({:+}; {} until vuln*)"
-    m_vuln = "`{}` is vulnerable! (**{:+}**, **{}** buffer)"
+    alerts  = []
+    watchlist = {}
+    _them   = FacRev[_us]
+    m_basic = "{}-{:12} {:.1f}% ({:+})"
+    m_vuln  = "{} is vulnerable! ({:+}, {} buffer)"
 
     for name, sys in wzNew.systems.items() :
+        if (sys.ownerID not in [_us, _them]) and (name not in wl) :
+            continue
         OwnerID = sys.ownerID
         Contest = sys.Contest() * 100
-        if (OwnerID not in [_us, _them]) or ((Contest < _green)) :
-            continue
         Owner = FacNames[sys.ownerID]
         Delta = PlexDelta(sys, wzOld.systems[name])
-        Buffer = sys.Buffer()
-        Vuln = 0 - Buffer
+        if (name in wl) :
+            watchlist[name] = m_basic.format(Owner[0], name, Contest, Delta)
+        else :
+            if Contest >= 100 :
+                alerts.append([Contest, m_vuln.format(name, Delta, sys.Buffer()), Delta])
+            else :
+                alerts.append([Contest, m_basic.format(Owner[0], name, Contest, Delta), Delta])
 
-        # add everything to alerts, if it's important enough to alert about
-        # TODO: Fricken fix this, because it's god-awful as hell
-        if Contest >= 100 :
-            alerts.append([Contest, m_vuln.format(name, Delta, Buffer)])
-        elif Contest >= _red :
-            if (OwnerID == _us) and (warning < 2) : warning = 2
-            alerts.append([Contest, m_red.format(name, Owner, Contest, Delta, Vuln)])
-        elif Contest >= _yellow :
-            if (OwnerID == _us) and (warning < 1) : warning = 1
-            alerts.append([Contest, m_yellow.format(name, Owner, Contest, Delta)])
-        elif Contest >= _green :
-            alerts.append([Contest, m_green.format(name, Owner, Contest, Delta)])
+    high_contest = sorted(alerts, key=lambda a: a[0], reverse=True)
+    message += ("Highly contested systems:```\n" +
+                '\n'.join(list(map(lambda x:x[1], high_contest[:limit]))) +
+                "```\n")
+    high_delta = sorted(high_contest, key=lambda a: a[2], reverse=True)
+    message += ("High-activity systems:```\n" +
+                '\n'.join(list(map(lambda x:x[1], high_delta[:limit]))) +
+                "```")
+    #for i in high_contest[:limit] :
+    #    message += i[1] + '\n'
+    #high_delta = sorted(high_contest, key)
+    if wl :
+        message += '\nWatchlisted systems:```\n'
+        for i in wl :
+            message += watchlist[i] + '\n'
+        message += '```'
 
-    # sort by highest
-    for i in reversed(list(range(len(alerts)))) :
-        for j in list(range(len(alerts))) :
-            if j >= i :
-                break
-            elif alerts[i][0] > alerts[j][0] :
-                alerts[i], alerts[j] = alerts[j], alerts[i]
-
-    for i in alerts[:limit] :
-        message += i[1] + '\n'
-
+    # TODO: replace this
     TPD = TotalPlexDelta(wzNew, wzOld, _us, _them)
     plexesUs = [TPD[0][0], TPD[0][1], TPD[0][2]]
     plexesThem = [TPD[1][0], TPD[1][1], TPD[1][2]]
-
     syscount = wzNew.CountSystems([_us, _them])[0]
-
     message += (
         "\nSince last run: _(d-plexes, o-plexes, total)_\n"
         "{3[0]} ({2[0]}) : {0[0]} / {0[1]} / {0[2]}\n"
@@ -130,3 +119,35 @@ def FWintel (wzNew, wzOld, _us) :
         [FacNames[_us], FacNames[_them]],
         HomeStats)
     return message, oled_message
+
+
+def PostSlack (s_tokens, message) :
+    for token in s_tokens :
+        s_url = "https://slack.com/api/chat.postMessage?"
+        args = {
+            "token"     : token[0],
+            "channel"   : token[1],
+            "text"      : message,
+            "username"  : "Fwintel 3.0",
+            "icon_url"  : 'http://i.imgur.com/xYBA19C.png',
+            "link_names": "1",
+            "parse"     : "full"
+        }
+        rs = requests.post(
+            url=(s_url + '&'.join(map(lambda key:key+'='+args[key]), args))
+        )
+        status = rs.status_code
+
+def PostDiscord (d_Webhooks, message) :
+    for Webhook in d_Webhooks :
+        rs = requests.post(
+            url="https://discordapp.com/api/webhooks/{0[0]}/{0[1]}".format(Webhook),
+            data=json.dumps({
+            "content": message,
+            "avatar_url": "https://i.imgur.com/zT82ioc.png",
+            "username":"dev"}),
+            headers={'Content-Type': 'application/json'}
+            )
+        status = rs.status_code
+        if status != 204 : # TODO
+            print(status)

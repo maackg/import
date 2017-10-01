@@ -11,7 +11,3 @@ xml/
 # ignore pycache and compiled files
 __pycache__/
 *.pyc
-
-# ignore currently-unsupported features
-homes.txt
-targets.txt
