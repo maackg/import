@@ -146,7 +146,7 @@ def PostSlack (config, WZD) :
     alerts = GetAlerts(WZD, config['militia'], config['watchlist'])
     timeNow = dt.utcnow()
 
-    message = discord_frame.format(
+    message = slack_frame.format(
         contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
         activity = '\n'.join(list(map(SysToText, alerts['activity'][:limit]))),
         watchlist = '\n'.join(list(map(SysToText, alerts['watchlist']))),
@@ -171,8 +171,8 @@ def PostSlack (config, WZD) :
     rs = requests.post(
         url=(s_url + '&'.join(list(map(lambda key:key+'='+args[key], args))))
     )
-    print()
     status = rs.status_code
+    #print(rs.json())
 
 def PostOLED (config, WZD) :
     HomeSys = config['home']
