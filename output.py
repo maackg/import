@@ -2,6 +2,7 @@
 from datetime import datetime as dt
 import json
 import requests
+import urllib.parse
 
 limit = 4
 
@@ -148,18 +149,18 @@ def PostSlack (config, WZD) :
 
     s_url = "https://slack.com/api/chat.postMessage?"
     args = {
-        "channel"   : config['channel'],
-        "icon_url"  : config['icon'],
-        "token"     : config['token'],
-        "username"  : config['username'],
+        "channel"   : urllib.parse.quote(config['channel']),
+        "icon_url"  : urllib.parse.quote(config['icon']),
+        "token"     : urllib.parse.quote(config['token']),
+        "username"  : urllib.parse.quote(config['username']),
         "link_names": "1",
         "parse"     : "full",
-        "text"      : message,
+        "text"      : urllib.parse.quote(message),
     }
     rs = requests.post(
         url=(s_url + '&'.join(list(map(lambda key:key+'='+args[key], args))))
     )
-    status = rs.status_code
+    #print(rs.json())
 
 def PostOLED (config, WZD) :
     HomeSys = config['home']
