@@ -54,6 +54,7 @@ In the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
 
 _{timeNow}_
 _Next update in {mins} minutes_
+_Discord: Xadi#6094_
 ~~~~~"""
 
 oled_frame = """\
