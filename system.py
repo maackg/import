@@ -23,7 +23,7 @@ class System :
     def __init__ (self, Data) :
         self.ID = Data['solar_system_id']
         self.name = names[str(self.ID)]
-        self.ownerID = Data['owner_faction_id']
+        self.ownerID = Data['occupier_faction_id']
         self.owner = FacNames[self.ownerID]
         self.vpNow = Data['victory_points']
         self.vpMax = Data['victory_points_threshold']

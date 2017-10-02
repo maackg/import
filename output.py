@@ -109,12 +109,11 @@ def SysToText (sys) :
         b=sys.Buffer()
     )
 
-def MessageFormatter (config, WZD, frame) :
+def MessageFactory (config, WZD, frame) :
     _us = FacIDs[config['militia']]
     _them = FacRev[_us]
     alerts = GetAlerts(WZD, config['militia'], config['watchlist'])
     timeNow = dt.utcnow()
-
     return frame.format(
         contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
         activity = '\n'.join(list(map(SysToText, alerts['activity'][:limit]))),
@@ -129,7 +128,7 @@ def MessageFormatter (config, WZD, frame) :
     )
 
 def PostDiscord (config, WZD) :
-    message = MessageFormatter(config, WZD, discord_frame)
+    message = MessageFactory(config, WZD, discord_frame)
 
     rs = requests.post(
         url     = config['url'],
@@ -145,7 +144,7 @@ def PostDiscord (config, WZD) :
         print(status)
 
 def PostSlack (config, WZD) :
-    message = MessageFormatter(config, WZD, slack_frame)
+    message = MessageFactory(config, WZD, slack_frame)
 
     s_url = "https://slack.com/api/chat.postMessage?"
     args = {
