@@ -33,7 +33,7 @@ High-activity systems:```
 {activity}```
 Watchlisted systems:```
 {watchlist}```
-Since last run: _(d-plexes, o-plexes, total)_
+In the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
 {names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
 {names[1]} ({count[1]}): {p_them[0]} / {p_them[1]} / {p_them[2]}
 
@@ -48,7 +48,7 @@ High-activity systems:```
 {activity}```
 Watchlisted systems:```
 {watchlist}```
-Since last run: _(d-plexes, o-plexes, total)_
+In the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
 {names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
 {names[1]} ({count[1]}): {p_them[0]} / {p_them[1]} / {p_them[2]}
 
@@ -122,6 +122,7 @@ def PostDiscord (config, WZD) :
         p_them = WZD.FacDeltas[_them],
         count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
         names = [FacNames[_us], FacNames[_them]],
+        timeSince = (timeNow-dt.strptime(WZD.TimeOld, esi_dt)).seconds//60,
         timeNow = dt.strftime(timeNow, esi_dt_noGMT),
         mins = (dt.strptime(WZD.NextExpiry, esi_dt)-timeNow).seconds//60
     )
@@ -153,6 +154,7 @@ def PostSlack (config, WZD) :
         p_them = WZD.FacDeltas[_them],
         count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
         names = [FacNames[_us], FacNames[_them]],
+        timeSince = (timeNow-dt.strptime(WZD.TimeOld, esi_dt)).seconds//60,
         timeNow = dt.strftime(timeNow, esi_dt_noGMT),
         mins = (dt.strptime(WZD.NextExpiry, esi_dt)-timeNow).seconds//60
     )
