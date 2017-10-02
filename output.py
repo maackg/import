@@ -109,13 +109,13 @@ def SysToText (sys) :
         b=sys.Buffer()
     )
 
-def PostDiscord (config, WZD) :
+def MessageFormatter (config, WZD, frame) :
     _us = FacIDs[config['militia']]
     _them = FacRev[_us]
     alerts = GetAlerts(WZD, config['militia'], config['watchlist'])
     timeNow = dt.utcnow()
 
-    message = discord_frame.format(
+    return frame.format(
         contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
         activity = '\n'.join(list(map(SysToText, alerts['activity'][:limit]))),
         watchlist = '\n'.join(list(map(SysToText, alerts['watchlist']))),
@@ -127,6 +127,9 @@ def PostDiscord (config, WZD) :
         timeNow = dt.strftime(timeNow, esi_dt_noGMT),
         mins = (dt.strptime(WZD.NextExpiry, esi_dt)-timeNow).seconds//60
     )
+
+def PostDiscord (config, WZD) :
+    message = MessageFormatter(config, WZD, discord_frame)
 
     rs = requests.post(
         url     = config['url'],
@@ -142,23 +145,8 @@ def PostDiscord (config, WZD) :
         print(status)
 
 def PostSlack (config, WZD) :
-    _us = FacIDs[config['militia']]
-    _them = FacRev[_us]
-    alerts = GetAlerts(WZD, config['militia'], config['watchlist'])
-    timeNow = dt.utcnow()
+    message = MessageFormatter(config, WZD, slack_frame)
 
-    message = slack_frame.format(
-        contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
-        activity = '\n'.join(list(map(SysToText, alerts['activity'][:limit]))),
-        watchlist = '\n'.join(list(map(SysToText, alerts['watchlist']))),
-        p_us = WZD.FacDeltas[_us],
-        p_them = WZD.FacDeltas[_them],
-        count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
-        names = [FacNames[_us], FacNames[_them]],
-        timeSince = (timeNow-dt.strptime(WZD.TimeOld, esi_dt)).seconds//60,
-        timeNow = dt.strftime(timeNow, esi_dt_noGMT),
-        mins = (dt.strptime(WZD.NextExpiry, esi_dt)-timeNow).seconds//60
-    )
     s_url = "https://slack.com/api/chat.postMessage?"
     args = {
         "channel"   : config['channel'],
@@ -172,8 +160,6 @@ def PostSlack (config, WZD) :
     rs = requests.post(
         url=(s_url + '&'.join(list(map(lambda key:key+'='+args[key], args))))
     )
-    status = rs.status_code
-    #print(rs.json())
 
 def PostOLED (config, WZD) :
     HomeSys = config['home']
