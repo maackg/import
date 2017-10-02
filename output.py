@@ -3,7 +3,7 @@ from datetime import datetime as dt
 import json
 import requests
 
-limit = 3
+limit = 4
 
 FacIDs = { # name -> id
     "Caldari State" : 500001,
@@ -171,6 +171,7 @@ def PostSlack (config, WZD) :
     rs = requests.post(
         url=(s_url + '&'.join(list(map(lambda key:key+'='+args[key], args))))
     )
+    print()
     status = rs.status_code
 
 def PostOLED (config, WZD) :
