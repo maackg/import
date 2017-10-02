@@ -159,6 +159,7 @@ def PostSlack (config, WZD) :
     rs = requests.post(
         url=(s_url + '&'.join(list(map(lambda key:key+'='+args[key], args))))
     )
+    status = rs.status_code
 
 def PostOLED (config, WZD) :
     HomeSys = config['home']
