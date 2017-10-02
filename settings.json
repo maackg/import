@@ -1,22 +1,36 @@
 {
-  "Militia" : "Caldari State",
-  "_OLED"   : false,
+  "_DISCORD": false,
   "_SLACK"  : false,
-  "_DISCORD": true,
+  "_OLED"   : false,
 
-  "Slack"   : [
-    {
-      "token"   : "xoxb-slack-key-here",
-      "channel" : "#fw-intel",
-      "username": "Fwintel 3.0",
-      "icon"    : "http://i.imgur.com/xYBA19C.png"
-    }
-  ],
   "Discord" : [
     {
+      "militia"     : "Caldari State",
+      "watchlist"   : [
+        "Pynekastoh",
+        "Tama",
+        "Old Man Star"
+      ],
       "avatar_url"  : "https://i.imgur.com/zT82ioc.png",
       "url"         : "https://canary.discordapp.com/api/webhooks/363554064480600066/Lm9WXmGSz36-IDiVr51uOk8i73RnBwMVjGqgsURdQbjsh2QkjSEyRRgJPfDKssaTukzJ",
       "username"    : "dev"
+    }
+  ],
+  "Slack"   : [
+    {
+      "militia"   : "Amarr Empire",
+      "watchlist" : ["Huola"],
+      "token"     : "xoxb-slack-key-here",
+      "channel"   : "#fw-intel",
+      "username"  : "Fwintel 3.0",
+      "icon"      : "http://i.imgur.com/xYBA19C.png"
+    }
+  ],
+  "OLED" : [
+    {
+      "file"      : "temp/oled.txt",
+      "militia"   : "Caldari State",
+      "home"      : "Pynekastoh"
     }
   ]
 }

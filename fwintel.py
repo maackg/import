@@ -6,7 +6,7 @@ import requests
 import sys
 
 import output
-from warzone import Warzone
+from warzone import GetWZD
 
 _cwd = os.path.dirname(os.path.abspath(__file__))
 _url = "https://esi.tech.ccp.is/latest/fw/systems"
@@ -38,37 +38,29 @@ def run (debugging=False) :
     try :
         with open("settings.json", 'r') as f :
             settings = json.load(f)
-        militia = settings["Militia"]
         TimeNow = dt.utcnow()
         if (os.path.isfile("temp/old.json")) :
+            # check cached data to see if it's expired
             with open("temp/old.json", 'r') as f :
                 old_data = json.load(f)
                 cache_expiry = dt.strptime(old_data['expires'], esi_dt)
             if (cache_expiry > TimeNow) and (not debugging):
                 return
-            new_data = GetAPI(_url)
+            else : # cache should've expired, let's get the new data
+                new_data = GetAPI(_url)
             if (dt.strptime(new_data['expires'], esi_dt) < TimeNow) and (not debugging) :
-                return # redundant, but makes sure CCP actually did update
-        else :
+                return # checks to make sure CCP didn't return old cache
+        else : # no old data present; init with new data
             new_data = GetAPI(_url)
             old_data = new_data.copy()
 
-        wzNew = Warzone(new_data)
-        wzOld = Warzone(old_data)
+        WZD = GetWZD(new_data, old_data)
 
-        sig = "\n*{}*\n*Next update in ~{} minutes*\n\~\~\~\~\~".format(
-        dt.strftime(dt.utcnow(), esi_dt_noGMT),
-        (dt.strptime(new_data['expires'], esi_dt)-TimeNow).seconds//60)
+        output.FWintel(settings, WZD)
 
-        slack_message, oled_message  = output.FWintel(wzNew, wzOld, militia, ["Pynekastoh", "Tama", "Old Man Star"])
-
-        if settings['_SLACK'] :
-            output.PostSlack(settings["Slack"], slack_message + sig)
-        if settings['_DISCORD'] :
-            output.PostDiscord(settings["Discord"], slack_message + sig)
-        if settings['_OLED'] :
-            with open(_oled_file, 'w') as f :
-                f.write(oled_message + new_data['expires']+'\n')
+        #if settings['_OLED'] :
+        #    with open(_oled_file, 'w') as f :
+        #        f.write(oled_message + new_data['expires']+'\n')
 
         if (not debugging) :
             with open(_lastdata, 'w') as f :
@@ -79,6 +71,7 @@ def run (debugging=False) :
         print(e)
 
 
+# TODO: command-line arguments
 if __name__ == "__main__" :
-    debug = len(sys.argv) - 1
+    debug = len(sys.argv) - 1 # lazy way of enabling debug mode
     run(debug)

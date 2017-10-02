@@ -32,10 +32,12 @@ class System :
     def Plexes (self) :
         return (self.vpNow // 20)
     def Contest (self) :     # percent, not in VP form
-        return (self.vpNow / self.vpMax)
+        return (self.vpNow / self.vpMax) * 100
     def Decontest (self) :     # percent, not in VP form
         return 1 - (self.vpNow / self.vpMax)
     def Buffer (self) :
         return (int((self.vpNow - self.vpMax) // 20))
     def DustMod (self) :
         return self.vpMax / 3000
+    def Vuln (self) :
+        return self.vpNow >= self.vpMax

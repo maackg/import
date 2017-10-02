@@ -1,7 +1,9 @@
 
+from datetime import datetime as dt
 import json
 import requests
 
+limit = 3
 
 FacIDs = { # name -> id
     "Caldari State" : 500001,
@@ -21,143 +23,170 @@ FacNames = { # shorthand names
     500003: "Amarr",
     500004: "Gallente"
     }
+esi_dt = "%a, %d %b %Y %H:%M:%S GMT"
+esi_dt_noGMT = "%a, %d %b %Y %H:%M:%S"
 
-def PlexDelta (New, Old) :
-    if New.ownerID == Old.ownerID :
-        return (New.Plexes() - Old.Plexes())
-    else : # prevents 150+ plexes being reported every time a system flips
-        return 0
+discord_frame = """\
+Highly contested systems:```
+{contest}```
+High-activity systems:```
+{activity}```
+Watchlisted systems:```
+{watchlist}```
+Since last run: _(d-plexes, o-plexes, total)_
+{names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
+{names[1]} ({count[1]}): {p_them[0]} / {p_them[1]} / {p_them[2]}
 
-# TODO: redesign this method
-def TotalPlexDelta (wzNew, wzOld, idFriendly, idHostile) :
-    Friendly = [0, 0, 0] # schema: [oplex, dplex, sum]
-    Hostile = [0, 0, 0]
-    Total = [0, 0, 0]
-    for name, sys in wzNew.systems.items() :
-        if sys.ownerID == idFriendly :
-            delta = PlexDelta(sys, wzOld.systems[name])
-            if delta > 0 :
-                Hostile[1] += delta
-            else :
-                Friendly[0] -= delta
-        elif sys.ownerID == idHostile :
-            delta = PlexDelta(sys, wzOld.systems[name])
-            if delta > 0 :
-                Friendly[1] += delta
-            else :
-                Hostile[0] -= delta
-    Friendly[2] = Friendly[0] + Friendly[1]
-    Hostile[2] = Hostile[0] + Hostile[1]
-    for i in range(3) :
-        Total[i] = Friendly[i] + Hostile[i]
-    return [Friendly, Hostile, Total]
+*{timeNow}*
+*Next update in {mins} minutes*
+\~\~\~\~\~"""
 
-# TODO: redesign this entire method, including better naming
-def FWintel (wzNew, wzOld, militia, wl=[], limit=4) :
-    message = ""
-    alerts  = []
-    watchlist = {}
-    _us = FacIDs[militia]
-    _them   = FacRev[_us]
-    m_basic = "{}-{:12} {:.1f}% ({:+})"
-    m_vuln  = "{} is vulnerable! ({:+}, {} buffer)"
+slack_frame = """\
+Highly contested systems:```
+{contest}```
+High-activity systems:```
+{activity}```
+Watchlisted systems:```
+{watchlist}```
+Since last run: _(d-plexes, o-plexes, total)_
+{names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
+{names[1]} ({count[1]}): {p_them[0]} / {p_them[1]} / {p_them[2]}
 
-    for name, sys in wzNew.systems.items() :
-        if (sys.ownerID not in [_us, _them]) and (name not in wl) :
-            continue
-        OwnerID = sys.ownerID
-        Contest = sys.Contest() * 100
-        Owner = FacNames[sys.ownerID]
-        Delta = PlexDelta(sys, wzOld.systems[name])
-        if (name in wl) :
-            watchlist[name] = m_basic.format(Owner[0], name, Contest, Delta)
-        else :
-            if Contest >= 100 :
-                alerts.append([Contest, m_vuln.format(name, Delta, sys.Buffer()), Delta])
-            else :
-                alerts.append([Contest, m_basic.format(Owner[0], name, Contest, Delta), Delta])
+_{timeNow}_
+_Next update in {mins} minutes_
+~~~~~"""
 
-    high_contest = sorted(alerts, key=lambda a: a[0], reverse=True)
-    message += ("Highly contested systems:```\n" +
-                '\n'.join(list(map(lambda x:x[1], high_contest[:limit]))) +
-                "```\n")
-    high_delta = sorted(high_contest[limit:], key=lambda a: abs(a[2]), reverse=True)
-    message += ("High-activity systems:```\n" +
-                '\n'.join(list(map(lambda x:x[1], high_delta[:limit]))) +
-                "```")
-    #for i in high_contest[:limit] :
-    #    message += i[1] + '\n'
-    #high_delta = sorted(high_contest, key)
-    if wl :
-        message += '\nWatchlisted systems:```\n'
-        for i in wl :
-            message += watchlist[i] + '\n'
-        message += '```'
+oled_frame = """\
+{names[0]} ({count[0]}): {p_us[0]}-{p_us[1]}
+{names[1]} ({count[1]}): {p_them[0]}-{p_them[1]}
+{home[name]}: {home[contest]:.3}% {home[delta]:+}
+{expiry}
+"""
 
-    # TODO: replace this
-    TPD = TotalPlexDelta(wzNew, wzOld, _us, _them)
-    plexesUs = [TPD[0][0], TPD[0][1], TPD[0][2]]
-    plexesThem = [TPD[1][0], TPD[1][1], TPD[1][2]]
-    syscount = wzNew.CountSystems([_us, _them])[0]
-    message += (
-        "\nSince last run: _(d-plexes, o-plexes, total)_\n"
-        "{3[0]} ({2[0]}) : {0[0]} / {0[1]} / {0[2]}\n"
-        "{3[1]} ({2[1]}): {1[0]} / {1[1]} / {1[2]}\n"
-        ).format(
-            plexesUs,
-            plexesThem,
-            [syscount[_us], syscount[_them]],
-            [FacNames[_us], FacNames[_them]])
+def FWintel (settings, WZD) :
+    if settings['_DISCORD'] :
+        for config in settings['Discord'] :
+            PostDiscord(config, WZD)
+    if settings['_SLACK'] :
+        for config in settings['Slack'] :
+            PostSlack(config, WZD)
+    if settings['_OLED'] :
+        for config in settings['OLED'] :
+            PostOLED(config, WZD)
 
-    # Pi-OLED output message
-    # TODO: design pi-oled schema
-    HomeSys = "Pynekastoh"
-    HomeStats = [
-        HomeSys,
-        wzNew.systems[HomeSys].owner[0],
-        wzNew.systems[HomeSys].Contest() * 100,
-        (wzNew.systems[HomeSys].vpNow - wzOld.systems[HomeSys].vpNow) // 20]
-    oled_message = (
-        "{3[0]} ({2[0]}): {0[0]};{0[1]}\n"
-        "{3[1]} ({2[1]}): {1[0]};{1[1]}\n"
-        "{4[0]}: {4[2]:.3}% {4[3]:+}\n"
-        ).format(
-        plexesUs,
-        plexesThem,
-        [syscount[_us], syscount[_them]],
-        [FacNames[_us], FacNames[_them]],
-        HomeStats)
-    return message, oled_message
-
-
-def PostSlack (Tokens, message) :
-    for token in Tokens :
-        s_url = "https://slack.com/api/chat.postMessage?"
-        args = {
-            "channel"   : token['channel'],
-            "icon_url"  : token['icon'],
-            "token"     : token['token'],
-            "username"  : token['username'],
-            "link_names": "1",
-            "parse"     : "full",
-            "text"      : message,
+def GetAlerts(WZD, Militia, Watchlist) :
+    _us = FacIDs[Militia]
+    _them = FacRev[_us]
+    alerts = {
+        'main' : filter(
+            lambda s: s.ownerID in [_us,_them] and (s.name not in Watchlist),
+            WZD.systems.values()),
+        'watchlist' : list(map(
+            lambda s: WZD.systems[s],
+            Watchlist
+        ))
         }
-        rs = requests.post(
-            url=(s_url + '&'.join(map(lambda key:key+'='+args[key]), args))
-        )
-        status = rs.status_code
+    alerts['contest'] = sorted(
+        alerts['main'],
+        key=lambda a: a.Contest(),
+        reverse=True)
+    alerts['activity'] = sorted(
+        alerts['contest'][limit:],
+        key=lambda a: abs(a.delta),
+        reverse=True)
+    return alerts
 
-def PostDiscord (Webhooks, message) :
-    for Webhook in Webhooks :
-        rs = requests.post(
-            url     = Webhook['url'],
-            data    = json.dumps({
-                    "content"   : message,
-                    "avatar_url": Webhook['avatar_url'],
-                    "username"  : Webhook['username']
-                    }),
-            headers = {'Content-Type': 'application/json'}
-            )
-        status = rs.status_code
-        if status != 204 : # TODO
-            print(status)
+def SysToText (sys) :
+    return {
+        True: "{o}-{n} is vulnerable! ({d:+}, {b} buffer)",
+        False: "{o}-{n:15} {c:.1f}% ({d:+})"
+    }[sys.Vuln()].format(
+        o=sys.owner[0],
+        n=sys.name,
+        c=sys.Contest(),
+        d=sys.delta,
+        b=sys.Buffer()
+    )
+
+def PostDiscord (config, WZD) :
+    _us = FacIDs[config['militia']]
+    _them = FacRev[_us]
+    alerts = GetAlerts(WZD, config['militia'], config['watchlist'])
+    timeNow = dt.utcnow()
+
+    message = discord_frame.format(
+        contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
+        activity = '\n'.join(list(map(SysToText, alerts['activity'][:limit]))),
+        watchlist = '\n'.join(list(map(SysToText, alerts['watchlist']))),
+        p_us = WZD.FacDeltas[_us],
+        p_them = WZD.FacDeltas[_them],
+        count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
+        names = [FacNames[_us], FacNames[_them]],
+        timeNow = dt.strftime(timeNow, esi_dt_noGMT),
+        mins = (dt.strptime(WZD.NextExpiry, esi_dt)-timeNow).seconds//60
+    )
+
+    rs = requests.post(
+        url     = config['url'],
+        data    = json.dumps({
+                "content"   : message,
+                "avatar_url": config['avatar_url'],
+                "username"  : config['username']
+                }),
+        headers = {'Content-Type': 'application/json'}
+        )
+    status = rs.status_code
+    if status != 204 : # TODO
+        print(status)
+
+def PostSlack (config, WZD) :
+    _us = FacIDs[config['militia']]
+    _them = FacRev[_us]
+    alerts = GetAlerts(WZD, config['militia'], config['watchlist'])
+    timeNow = dt.utcnow()
+
+    message = discord_frame.format(
+        contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
+        activity = '\n'.join(list(map(SysToText, alerts['activity'][:limit]))),
+        watchlist = '\n'.join(list(map(SysToText, alerts['watchlist']))),
+        p_us = WZD.FacDeltas[_us],
+        p_them = WZD.FacDeltas[_them],
+        count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
+        names = [FacNames[_us], FacNames[_them]],
+        timeNow = dt.strftime(timeNow, esi_dt_noGMT),
+        mins = (dt.strptime(WZD.NextExpiry, esi_dt)-timeNow).seconds//60
+    )
+    s_url = "https://slack.com/api/chat.postMessage?"
+    args = {
+        "channel"   : config['channel'],
+        "icon_url"  : config['icon'],
+        "token"     : config['token'],
+        "username"  : config['username'],
+        "link_names": "1",
+        "parse"     : "full",
+        "text"      : message,
+    }
+    rs = requests.post(
+        url=(s_url + '&'.join(list(map(lambda key:key+'='+args[key], args))))
+    )
+    status = rs.status_code
+
+def PostOLED (config, WZD) :
+    HomeSys = config['home']
+    _us = FacIDs[config['militia']]
+    _them = FacRev[_us]
+    HomeStats = {
+        'name'      : HomeSys,
+        'contest'   : WZD.systems[HomeSys].Contest(),
+        'delta'     : WZD.systems[HomeSys].delta
+    }
+    message = oled_frame.format(
+        names = [FacNames[_us], FacNames[_them]],
+        count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
+        p_us = WZD.FacDeltas[_us],
+        p_them = WZD.FacDeltas[_them],
+        home = HomeStats,
+        expiry = WZD.NextExpiry
+    )
+    with open(config['file'], 'w') as f :
+        f.write(message)

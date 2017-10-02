@@ -20,6 +20,7 @@ class Warzone :
     def __init__ (self, Data) :
         self.data = Data
         self.timestamp = Data['timestamp']
+        self.expires = Data['expires']
         self.systems = {}
         with open("names.json", 'r') as f :
             names = json.load(f)
@@ -42,3 +43,43 @@ class Warzone :
                 countFacs[sys.ownerID] += 1
                 countAll += 1
         return [countFacs, countAll]
+
+class WarzoneDiff :
+    # aggregates two warzones, then stores in a single container
+    def __init__ (self, wzNew, wzOld) :
+        self.TimeOld = wzOld.timestamp
+        self.TimeNew = wzNew.timestamp
+        self.NextExpiry = wzNew.expires
+        self.FacDeltas = {  # facID : [dplex, oplex, total]
+            500001  : [0,0,0], # Caldari
+            500002  : [0,0,0], # Minmatar
+            500003  : [0,0,0], # Amarr
+            500004  : [0,0,0]  # Gallente
+        }
+        self.FacSysCounts = {
+            500001 : 0,
+            500002 : 0,
+            500003 : 0,
+            500004 : 0
+        }
+        self.systems = wzNew.systems # reuse dictionary
+        for name, sys in self.systems.items() :
+            sys.old = wzOld.systems[name]
+            facID = sys.ownerID
+            enemyID = abs((facID%500000)-5)+500000
+            sys.delta = sys.Plexes() - sys.old.Plexes()
+            if facID != sys.old.ownerID :
+                sys.delta = 0
+            if (sys.delta > 0) : # oplexing happened; credit the enemy
+                self.FacDeltas[enemyID][1] += sys.delta
+                self.FacDeltas[enemyID][2] += sys.delta
+            else : # either deplexing or nothing happened; credit the owner
+                self.FacDeltas[facID][0] -= sys.delta
+                self.FacDeltas[facID][2] -= sys.delta
+            self.FacSysCounts[facID] += 1
+
+# quick WZD generator
+def GetWZD (new_ESI_data, old_ESI_data) :
+    wzNew = Warzone(new_ESI_data)
+    wzOld = Warzone(old_ESI_data)
+    return WarzoneDiff(wzNew, wzOld)
