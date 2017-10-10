@@ -130,14 +130,14 @@ def MessageFactory (config, WZD, frame) :
 
 def PostDiscord (config, WZD) :
     message = MessageFactory(config, WZD, discord_frame)
+    payload = {"content":message}
+    for c in ["avatar_url", "username"] :
+        if c in config:
+            payload[c] = config[c]
 
     rs = requests.post(
         url     = config['url'],
-        data    = json.dumps({
-                "content"   : message,
-                "avatar_url": config['avatar_url'],
-                "username"  : config['username']
-                }),
+        data    = payload,
         headers = {'Content-Type': 'application/json'}
         )
     status = rs.status_code
