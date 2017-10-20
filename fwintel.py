@@ -75,7 +75,7 @@ def run (debugging=False) :
         #        f.write(oled_message + new_data['expires']+'\n')
 
             #new_data.Save(_cwd + '/history/')
-
+        print("success")
     except Exception as e:
         print(e)
 
