@@ -1,6 +1,7 @@
 # fwintel
 
-**Disclaimer**
+##Disclaimer##
+
 As of current writing, this is a very poorly documented intel bot designed for Factional Warfare.  It's published so that any may use or learn from this project; however if you want any functionality, it might be simpler to just EVE-mail Nikolai Agnon or contact Xadi#6094 on Discord, and I'll be happy to add your corp/alliance's discord.  
 
 For context, I run this on a [Raspberry Pi Zero W](https://www.adafruit.com/product/3409) with an [OLED display](https://learn.adafruit.com/adafruit-pioled-128x32-mini-oled-for-raspberry-pi).  *I'm working towards moving the OLED display bit away from the fwintel bot, because (realistically) nobody else has any use for it.*
