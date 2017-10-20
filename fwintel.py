@@ -63,6 +63,10 @@ def run (debugging=False) :
 
         WZD = GetWZD(new_data, old_data)
         WZ_Hourly = GetWZD(new_data, hr_data)
+        if (not debugging) :
+            for fn, d in ((_lastdata,new_data), (_1hrdata,old_data)) :
+                with open(fn, 'w') as f :
+                    json.dump(d, f, indent='\t')
 
         output.FWintel(settings, WZD, WZ_Hourly)
 
@@ -70,10 +74,6 @@ def run (debugging=False) :
         #    with open(_oled_file, 'w') as f :
         #        f.write(oled_message + new_data['expires']+'\n')
 
-        if (not debugging) :
-            for fn, d in ((_lastdata,new_data), (_1hrdata,old_data)) :
-                with open(fn, 'w') as f :
-                    json.dump(d, f, indent='\t')
             #new_data.Save(_cwd + '/history/')
 
     except Exception as e:

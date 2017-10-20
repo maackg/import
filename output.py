@@ -79,7 +79,7 @@ def FWintel (settings, WZD, WZD_Hourly) :
                 pass
     if settings['_OLED'] :
         for config in settings['OLED'] :
-            PostOLED(config, WZD)
+            PostOLED(config, WZD, WZD_Hourly)
 
 def GetAlerts(WZD, Militia, Watchlist) :
     _us = FacIDs[Militia]
