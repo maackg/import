@@ -37,10 +37,10 @@ oled_frame = """\
 def FWintel (settings, WZD, WZD_Hourly) :
     if settings['_DISCORD'] :
         for config in settings['Discord'] :
-            try : # lazy way of
-                PostDiscord(config, WZD, WZD_Hourly)
-            except Exception as e :
-                pass
+            #try : # lazy way of
+            PostDiscord(config, WZD, WZD_Hourly)
+            #except Exception as e :
+            #    pass
     if settings['_OLED'] : # OLED support is being phasing out
         for config in settings['OLED'] :
             PostOLED(config, WZD, WZD_Hourly)
@@ -116,7 +116,7 @@ def MessageFactory (config, WZD, WZD_Hourly) :
     )
 
 def PostDiscord (config, WZD, WZD_Hourly) :
-    message = MessageFactory(config, discord_frame, WZD, WZD_Hourly)
+    message = MessageFactory(config, WZD, WZD_Hourly)
     payload = {"content":message}
     for c in ["avatar_url", "username"] :
         if c in config:
@@ -128,8 +128,11 @@ def PostDiscord (config, WZD, WZD_Hourly) :
         headers = {'Content-Type': 'application/json'}
         )
     status = rs.status_code
-    if status != 204 : # TODO
+    if status == 204 : # TODO
+        print("discord: " + config['note'])
+    else :
         print("failed to send. error code: " + status)
+
 
 # Coming soon: removing this entirely
 def PostOLED (config, WZD, WZD_Hourly) :
