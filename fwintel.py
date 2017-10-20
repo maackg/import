@@ -73,7 +73,7 @@ def run (debugging=False) :
         if (not debugging) :
             with open(_lastdata, 'w') as f :
                 json.dump(new_data, f, indent='\t')
-            wzNew.Save(_cwd + '/history/')
+            new_data.Save(_cwd + '/history/')
 
     except Exception as e:
         print(e)

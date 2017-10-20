@@ -131,7 +131,7 @@ def MessageFactory (config, frame, WZD, WZD_Hourly) :
         count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
         names = [FacNames[_us], FacNames[_them]],
         timeSince = (timeNow-dt.strptime(WZD.TimeOld, esi_dt)).seconds//60,
-        timeHour = ((timeNow-dt.strptime(WZD_Hourly.TimeOld, esi_dt)).seconds//60)
+        timeHour = ((timeNow-dt.strptime(WZD_Hourly.TimeOld, esi_dt)).seconds//60),
         timeNow = dt.strftime(timeNow, esi_dt_noGMT),
         mins = (dt.strptime(WZD.NextExpiry, esi_dt)-timeNow).seconds//60
     )
@@ -145,7 +145,7 @@ def PostDiscord (config, WZD, WZD_Hourly) :
 
     rs = requests.post(
         url     = config['url'],
-        data    = payload,
+        data    = json.dumps(payload),
         headers = {'Content-Type': 'application/json'}
         )
     status = rs.status_code
