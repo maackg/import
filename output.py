@@ -104,7 +104,7 @@ def MessageFactory (config, WZD, WZD_Hourly) :
     return frame.format(
         contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
         activity = '\n'.join(list(map(SysToText, alerts['activity'][:limit]))),
-        watchlist = {False:"",True:}'\n'.join(list(map(SysToText, alerts['watchlist']))),
+        watchlist = '\n'.join(list(map(SysToText, alerts['watchlist']))),
         p_us = WZD.FacDeltas[_us],
         p_them = WZD.FacDeltas[_them],
         count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
