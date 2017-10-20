@@ -34,7 +34,7 @@ High-activity systems:```
 {activity}```
 Watchlisted systems:```
 {watchlist}```
-In the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
+Just in the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
 {names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
 {names[1]} ({count[1]}): {p_them[0]} / {p_them[1]} / {p_them[2]}
 
@@ -45,7 +45,7 @@ In the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
 slack_frame = """\
 Highly contested systems:```
 {contest}```
-High-activity systems:```
+High-activity systems ({timeSinceHour} minutes):```
 {activity}```
 Watchlisted systems:```
 {watchlist}```
@@ -55,7 +55,6 @@ In the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
 
 _{timeNow}_
 _Next update in {mins} minutes_
-_Discord: Xadi#6094_
 ~~~~~"""
 
 oled_frame = """\
@@ -65,13 +64,19 @@ oled_frame = """\
 {expiry}
 """
 
-def FWintel (settings, WZD) :
+def FWintel (settings, WZD, WZD_Hourly) :
     if settings['_DISCORD'] :
         for config in settings['Discord'] :
-            PostDiscord(config, WZD)
+            try :
+                PostDiscord(config, WZD, WZD_Hourly)
+            except e :
+                pass
     if settings['_SLACK'] :
         for config in settings['Slack'] :
-            PostSlack(config, WZD)
+            try :
+                PostSlack(config, WZD, WZD_Hourly)
+            except e:
+                pass
     if settings['_OLED'] :
         for config in settings['OLED'] :
             PostOLED(config, WZD)
@@ -110,10 +115,12 @@ def SysToText (sys) :
         b=sys.Buffer()
     )
 
-def MessageFactory (config, WZD, frame) :
+def MessageFactory (config, frame, WZD, WZD_Hourly) :
     _us = FacIDs[config['militia']]
     _them = FacRev[_us]
-    alerts = GetAlerts(WZD, config['militia'], config['watchlist'])
+
+    # NOTE: Alerts now show hourly figures
+    alerts = GetAlerts(WZD_Hourly, config['militia'], config['watchlist'])
     timeNow = dt.utcnow()
     return frame.format(
         contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
@@ -124,12 +131,13 @@ def MessageFactory (config, WZD, frame) :
         count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
         names = [FacNames[_us], FacNames[_them]],
         timeSince = (timeNow-dt.strptime(WZD.TimeOld, esi_dt)).seconds//60,
+        timeHour = ((timeNow-dt.strptime(WZD_Hourly.TimeOld, esi_dt)).seconds//60)
         timeNow = dt.strftime(timeNow, esi_dt_noGMT),
         mins = (dt.strptime(WZD.NextExpiry, esi_dt)-timeNow).seconds//60
     )
 
-def PostDiscord (config, WZD) :
-    message = MessageFactory(config, WZD, discord_frame)
+def PostDiscord (config, WZD, WZD_Hourly) :
+    message = MessageFactory(config, discord_frame, WZD, WZD_Hourly)
     payload = {"content":message}
     for c in ["avatar_url", "username"] :
         if c in config:
@@ -144,8 +152,8 @@ def PostDiscord (config, WZD) :
     if status != 204 : # TODO
         print(status)
 
-def PostSlack (config, WZD) :
-    message = MessageFactory(config, WZD, slack_frame)
+def PostSlack (config, WZD, WZD_Hourly) :
+    message = MessageFactory(config, slack_frame, WZD_Hourly)
 
     s_url = "https://slack.com/api/chat.postMessage?"
     args = {
@@ -162,7 +170,7 @@ def PostSlack (config, WZD) :
     )
     #print(rs.json())
 
-def PostOLED (config, WZD) :
+def PostOLED (config, WZD, WZD_Hourly) :
     HomeSys = config['home']
     _us = FacIDs[config['militia']]
     _them = FacRev[_us]
