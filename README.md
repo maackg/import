@@ -1,6 +1,6 @@
 # fwintel
 
-# Disclaimer
+**Disclaimer**
 
 As of current writing, this is a very poorly documented intel bot designed for Factional Warfare.  It's published so that any may use or learn from this project; however if you want any functionality, it might be simpler to just EVE-mail Nikolai Agnon or contact Xadi#6094 on Discord, and I'll be happy to add your corp/alliance's discord.  
 
