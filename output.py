@@ -28,11 +28,11 @@ esi_dt = "%a, %d %b %Y %H:%M:%S GMT"
 esi_dt_noGMT = "%a, %d %b %Y %H:%M:%S"
 
 discord_frame = """\
-Highly contested systems:```
+Highly contested systems *(hourly)*:```
 {contest}```
-High-activity systems:```
+High-activity systems *(hourly)*:```
 {activity}```
-Watchlisted systems:```
+Watchlisted systems *(hourly)*:```
 {watchlist}```
 Just in the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
 {names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
