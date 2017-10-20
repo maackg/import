@@ -69,13 +69,13 @@ def FWintel (settings, WZD, WZD_Hourly) :
         for config in settings['Discord'] :
             try :
                 PostDiscord(config, WZD, WZD_Hourly)
-            except e :
+            except Exception as e :
                 pass
     if settings['_SLACK'] :
         for config in settings['Slack'] :
             try :
                 PostSlack(config, WZD, WZD_Hourly)
-            except e:
+            except Exception as e:
                 pass
     if settings['_OLED'] :
         for config in settings['OLED'] :
