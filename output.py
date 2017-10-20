@@ -27,36 +27,6 @@ FacNames = { # shorthand names
 esi_dt = "%a, %d %b %Y %H:%M:%S GMT"
 esi_dt_noGMT = "%a, %d %b %Y %H:%M:%S"
 
-discord_frame = """\
-Highly contested systems *(hourly)*:```
-{contest}```
-High-activity systems *(hourly)*:```
-{activity}```
-Watchlisted systems *(hourly)*:```
-{watchlist}```
-Just in the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
-{names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
-{names[1]} ({count[1]}): {p_them[0]} / {p_them[1]} / {p_them[2]}
-
-*{timeNow}*
-*Next update in {mins} minutes*
-\~\~\~\~\~"""
-
-slack_frame = """\
-Highly contested systems:```
-{contest}```
-High-activity systems ({timeSinceHour} minutes):```
-{activity}```
-Watchlisted systems:```
-{watchlist}```
-In the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
-{names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
-{names[1]} ({count[1]}): {p_them[0]} / {p_them[1]} / {p_them[2]}
-
-_{timeNow}_
-_Next update in {mins} minutes_
-~~~~~"""
-
 oled_frame = """\
 {names[0]} ({count[0]}): {p_us[0]}-{p_us[1]}
 {names[1]} ({count[1]}): {p_them[0]}-{p_them[1]}
@@ -67,17 +37,11 @@ oled_frame = """\
 def FWintel (settings, WZD, WZD_Hourly) :
     if settings['_DISCORD'] :
         for config in settings['Discord'] :
-            try :
+            try : # lazy way of
                 PostDiscord(config, WZD, WZD_Hourly)
             except Exception as e :
                 pass
-    if settings['_SLACK'] :
-        for config in settings['Slack'] :
-            try :
-                PostSlack(config, WZD, WZD_Hourly)
-            except Exception as e:
-                pass
-    if settings['_OLED'] :
+    if settings['_OLED'] : # OLED support is being phasing out
         for config in settings['OLED'] :
             PostOLED(config, WZD, WZD_Hourly)
 
@@ -115,17 +79,32 @@ def SysToText (sys) :
         b=sys.Buffer()
     )
 
-def MessageFactory (config, frame, WZD, WZD_Hourly) :
+frame = """\
+Highly contested systems *(hourly)*:```
+{contest}```
+High-activity systems *(hourly)*:```
+{activity}```
+Watchlisted systems *(hourly)*:```
+{watchlist}```
+Just in the past {timeSince} minutes: _(d-plexes, o-plexes, total)_
+{names[0]} ({count[0]}) : {p_us[0]} / {p_us[1]} / {p_us[2]}
+{names[1]} ({count[1]}): {p_them[0]} / {p_them[1]} / {p_them[2]}
+
+*{timeNow}*
+*Next update in {mins} minutes*
+\~\~\~\~\~"""
+def MessageFactory (config, WZD, WZD_Hourly) :
     _us = FacIDs[config['militia']]
     _them = FacRev[_us]
 
     # NOTE: Alerts now show hourly figures
     alerts = GetAlerts(WZD_Hourly, config['militia'], config['watchlist'])
     timeNow = dt.utcnow()
+    watchlist = "Watchlisted systems *(hourly)*:```{}```"
     return frame.format(
         contest = '\n'.join(list(map(SysToText, alerts['contest'][:limit]))),
         activity = '\n'.join(list(map(SysToText, alerts['activity'][:limit]))),
-        watchlist = '\n'.join(list(map(SysToText, alerts['watchlist']))),
+        watchlist = {False:"",True:}'\n'.join(list(map(SysToText, alerts['watchlist']))),
         p_us = WZD.FacDeltas[_us],
         p_them = WZD.FacDeltas[_them],
         count = [WZD.FacSysCounts[_us], WZD.FacSysCounts[_them]],
@@ -150,26 +129,9 @@ def PostDiscord (config, WZD, WZD_Hourly) :
         )
     status = rs.status_code
     if status != 204 : # TODO
-        print(status)
+        print("failed to send. error code: " + status)
 
-def PostSlack (config, WZD, WZD_Hourly) :
-    message = MessageFactory(config, slack_frame, WZD_Hourly)
-
-    s_url = "https://slack.com/api/chat.postMessage?"
-    args = {
-        "channel"   : urllib.parse.quote(config['channel']),
-        "icon_url"  : urllib.parse.quote(config['icon']),
-        "token"     : urllib.parse.quote(config['token']),
-        "username"  : urllib.parse.quote(config['username']),
-        "link_names": "1",
-        "parse"     : "full",
-        "text"      : urllib.parse.quote(message),
-    }
-    rs = requests.post(
-        url=(s_url + '&'.join(list(map(lambda key:key+'='+args[key], args))))
-    )
-    #print(rs.json())
-
+# Coming soon: removing this entirely
 def PostOLED (config, WZD, WZD_Hourly) :
     HomeSys = config['home']
     _us = FacIDs[config['militia']]
